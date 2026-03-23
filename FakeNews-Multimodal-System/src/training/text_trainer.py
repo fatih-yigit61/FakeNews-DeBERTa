@@ -1904,6 +1904,9 @@ class Model1ExpertTrainer:
 
     def load_best_model(self) -> None:
         ckpt_path = Path(self.cfg.output_dir) / "best_model.pt"
+        if not ckpt_path.exists():
+            print(f"[WARN] Checkpoint not found: {ckpt_path} — skipping load")
+            return
         if self.model is None:
             self.build_model()
         ckpt = torch.load(ckpt_path, map_location=self.device, weights_only=False)
