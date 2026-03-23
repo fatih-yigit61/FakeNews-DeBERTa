@@ -30,14 +30,14 @@ class TrainerConfig:
     max_seq_len: int = MAX_SEQ_LEN
 
     num_epochs: int = 12
-    batch_size: int = 64           # A100 40GB + BF16 = enough for batch=64 with seq_len=512
+    batch_size: int = 32           # DeBERTa disentangled attention needs more VRAM than XLM-R
     learning_rate: float = 2e-5
     weight_decay: float = 1e-2
     warmup_ratio: float = 0.1
     max_grad_norm: float = 1.0
     fp16: bool = False              # DeBERTa-v3 FP16 params incompatible with GradScaler — use bf16 instead
     bf16: bool = True               # BF16 autocast: A100 native, same speed as FP16 but no NaN (FP32 exponent range)
-    gradient_accum: int = 2        # batch=64 * accum=2 = effective 128
+    gradient_accum: int = 4        # batch=32 * accum=4 = effective 128
 
     lambda_fake: float = 1.5          # explicit fake head weight (was implicit 1.0)
     lambda_sentiment: float = 1.3     # raised from 1.0: sentiment needs more gradient (69% → 75% target)
