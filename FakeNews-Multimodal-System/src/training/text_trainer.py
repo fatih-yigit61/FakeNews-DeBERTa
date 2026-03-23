@@ -1313,7 +1313,11 @@ class Model1ExpertTrainer:
         optimizer = self._build_optimizer()
         total_steps = len(self.train_loader) * self.cfg.num_epochs // self.cfg.gradient_accum
         scheduler = get_linear_schedule_with_warmup(optimizer, int(total_steps * self.cfg.warmup_ratio), total_steps)
-        scaler = GradScaler("cuda", enabled=self.cfg.fp16)
+        # BF16 autocast for DeBERTa-v3: same speed as FP16 but NaN-safe (FP32 exponent range)
+        # GradScaler is NOT needed for BF16 — only required for FP16
+        use_amp = self.cfg.bf16 or self.cfg.fp16
+        amp_dtype = torch.bfloat16 if self.cfg.bf16 else torch.float16
+        scaler = GradScaler("cuda", enabled=self.cfg.fp16)  # disabled for bf16
         history = []
         epochs_no_improve = 0
         for epoch in range(1, self.cfg.num_epochs + 1):
@@ -1330,16 +1334,23 @@ class Model1ExpertTrainer:
                     "sentiment_intensity": batch["sentiment_intensity"].to(self.device),
                     "manipulation_label": batch["manipulation_label"].to(self.device),
                 }
-                with autocast("cuda", enabled=self.cfg.fp16):
+                with autocast("cuda", enabled=use_amp, dtype=amp_dtype):
                     predictions = self.model(input_ids, attn_mask, style)
                     losses = criterion(predictions, targets)
                     loss = losses["total_loss"] / self.cfg.gradient_accum
-                scaler.scale(loss).backward()
+                if self.cfg.fp16:
+                    scaler.scale(loss).backward()
+                else:
+                    loss.backward()
                 if step % self.cfg.gradient_accum == 0:
-                    scaler.unscale_(optimizer)
+                    if self.cfg.fp16:
+                        scaler.unscale_(optimizer)
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
-                    scaler.step(optimizer)
-                    scaler.update()
+                    if self.cfg.fp16:
+                        scaler.step(optimizer)
+                        scaler.update()
+                    else:
+                        optimizer.step()
                     scheduler.step()
                     optimizer.zero_grad()
                 train_loss += loss.item() * self.cfg.gradient_accum
@@ -1629,10 +1640,12 @@ class Model1ExpertTrainer:
                 "sentiment_intensity": batch["sentiment_intensity"].to(self.device),
                 "manipulation_label":  batch["manipulation_label"].to(self.device),
             }
-            with autocast("cuda", enabled=self.cfg.fp16):
+            _use_amp = self.cfg.bf16 or self.cfg.fp16
+            _amp_dt = torch.bfloat16 if self.cfg.bf16 else torch.float16
+            with autocast("cuda", enabled=_use_amp, dtype=_amp_dt):
                 predictions = self.model(input_ids, attn_mask, style)
                 losses = criterion(predictions, targets)
-            total_loss += losses["total_loss"].item()
+            total_loss += losses["total_loss"].float().item()
 
             # ── Manipulation (binary) ──────────────────────────────────────
             manip_label_np = targets["manipulation_label"].cpu().numpy()
