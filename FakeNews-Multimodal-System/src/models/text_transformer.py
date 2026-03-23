@@ -49,7 +49,8 @@ class OptimizedMultiTaskModel(nn.Module):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, style_feats: torch.Tensor) -> Dict[str, torch.Tensor]:
         enc_out = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        cls_vec = self.dropout(enc_out.last_hidden_state[:, 0, :])
+        # DeBERTa-v3 stores weights in FP16 internally — cast to FP32 for head compatibility
+        cls_vec = self.dropout(enc_out.last_hidden_state[:, 0, :].float())
         # Always compute style_proj + enhanced (needed for embeddings output / GNN compat)
         style_proj = self.style_proj(style_feats)
         enhanced = self.layer_norm(torch.cat([cls_vec, style_proj], dim=-1))
