@@ -1,0 +1,13 @@
+torch
+transformers
+fasttext
+numpy
+pandas
+scikit-learn
+tqdm
+matplotlib
+seaborn
+sentencepiece
+protobuf
+networkx
+torch-geometric
