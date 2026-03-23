@@ -1651,7 +1651,7 @@ class Model1ExpertTrainer:
             manip_label_np = targets["manipulation_label"].cpu().numpy()
             manip_mask = manip_label_np != -1
             if manip_mask.any():
-                manip_probs = torch.sigmoid(predictions["manipulation_logits"]).cpu().numpy()
+                manip_probs = torch.sigmoid(predictions["manipulation_logits"]).float().cpu().numpy()
                 all_manip_probs.extend(manip_probs[manip_mask].tolist())
                 all_manip_labels.extend(manip_label_np[manip_mask].astype(int).tolist())
 
@@ -1659,7 +1659,7 @@ class Model1ExpertTrainer:
             fake_label_np = targets["fake_label"].cpu().numpy()
             fake_mask = fake_label_np != -1
             if fake_mask.any():
-                fake_softmax = torch.softmax(predictions["fake_logits"], dim=-1).cpu().numpy()
+                fake_softmax = torch.softmax(predictions["fake_logits"], dim=-1).float().cpu().numpy()
                 fake_preds_np = fake_softmax.argmax(axis=-1)
                 all_fake_preds.extend(fake_preds_np[fake_mask].tolist())
                 all_fake_labels.extend(fake_label_np[fake_mask].tolist())
@@ -1669,7 +1669,7 @@ class Model1ExpertTrainer:
             sent_label_np = targets["sentiment_label"].cpu().numpy()
             sent_mask = sent_label_np != -1
             if sent_mask.any():
-                sent_preds = predictions["sentiment_logits"].argmax(dim=-1).cpu().numpy()
+                sent_preds = predictions["sentiment_logits"].float().argmax(dim=-1).cpu().numpy()
                 all_sent_preds.extend(sent_preds[sent_mask].tolist())
                 all_sent_labels.extend(sent_label_np[sent_mask].tolist())
 
