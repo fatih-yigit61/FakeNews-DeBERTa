@@ -11,9 +11,9 @@ from configs.config import ENHANCED_DIM, HIDDEN_SIZE, MANIP_EMBED_DIM, MODEL_NAM
 class OptimizedMultiTaskModel(nn.Module):
     def __init__(self, model_name: str = MODEL_NAME, dropout_rate: float = 0.1, use_style_in_fake: bool = True) -> None:
         super().__init__()
-        # DeBERTa-v3 stores weights in FP16 internally — BF16 autocast handles
-        # precision safely (same exponent range as FP32, no NaN risk)
-        self.encoder = AutoModel.from_pretrained(model_name)
+        # DeBERTa-v3 stores weights in FP16 internally — convert to FP32 to prevent
+        # NaN during gradient updates. BF16 autocast still handles fast compute.
+        self.encoder = AutoModel.from_pretrained(model_name).float()
         self.dropout = nn.Dropout(dropout_rate)
         self.use_style_in_fake = use_style_in_fake
 

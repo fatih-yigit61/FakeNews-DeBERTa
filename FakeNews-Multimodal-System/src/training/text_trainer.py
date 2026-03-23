@@ -1681,7 +1681,7 @@ class Model1ExpertTrainer:
         }
 
         if all_manip_probs:
-            probs_arr  = np.array(all_manip_probs)
+            probs_arr  = np.nan_to_num(np.array(all_manip_probs), nan=0.5)
             labels_arr = np.array(all_manip_labels)
             if update_threshold:
                 # Wide sweep [0.15, 0.75] with 0.01 step: imbalanced data (~20% positive)

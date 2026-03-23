@@ -14,7 +14,7 @@ STYLE_FEAT_DIM = 5          # punct_density, caps_ratio, quotation_flag, ttr, av
 STYLE_PROJ_DIM = 64         # stylometric features projected before CLS concat to ensure gradient reach
 ENHANCED_DIM = 832          # HIDDEN_SIZE + STYLE_PROJ_DIM (768 + 64)
 MANIP_EMBED_DIM = 128       # manipulation head hidden layer dim — used as GNN node feature
-MAX_SEQ_LEN = 512
+MAX_SEQ_LEN = 256           # reduced from 512: DeBERTa disentangled attn is O(n²), 256 is 4x faster
 LABEL_SMOOTH_EPS = 0.05   # reduced from 0.10: too aggressive for multi-domain training (3 conflicting domains)
 
 
