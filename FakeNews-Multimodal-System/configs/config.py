@@ -35,7 +35,7 @@ class TrainerConfig:
     weight_decay: float = 1e-2
     warmup_ratio: float = 0.1
     max_grad_norm: float = 1.0
-    fp16: bool = True
+    fp16: bool = False              # DeBERTa-v3 uses FP16 params internally, incompatible with GradScaler
     gradient_accum: int = 4        # increased from 2 to keep effective batch=128
 
     lambda_fake: float = 1.5          # explicit fake head weight (was implicit 1.0)
